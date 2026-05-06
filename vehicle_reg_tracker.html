@@ -1,0 +1,452 @@
+<h2 class="sr-only">Vehicle Registration POC — 2-month real-time deadline tracker with week status and task completion</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;
+  color:#1e293b;
+  background:#f8fafc;
+  padding:1.5rem 0;
+}
+
+/* HEADER */
+.hdr{margin-bottom:1.5rem}
+.hdr h1{font-size:20px;font-weight:600;margin-bottom:4px}
+.hdr p{font-size:13px;color:#64748b}
+
+.overall-bar-wrap{
+  height:10px;
+  background:#e2e8f0;
+  border-radius:999px;
+  margin-top:12px;
+  overflow:hidden;
+}
+
+.overall-bar-fill{
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(90deg,#1D9E75,#22c55e);
+  transition:width .4s ease;
+}
+
+/* STATS */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  margin-bottom:1.75rem
+}
+
+.stat{
+  background:#fff;
+  border-radius:12px;
+  padding:.9rem 1rem;
+  border:1px solid #e2e8f0;
+  box-shadow:0 2px 6px rgba(0,0,0,0.03);
+}
+
+.stat .val{font-size:22px;font-weight:600}
+.stat .lbl{font-size:11px;color:#64748b;margin-top:3px}
+
+/* MONTH */
+.month-lbl{
+  font-size:12px;
+  font-weight:600;
+  color:#94a3b8;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  margin:.4rem 0 .7rem
+}
+
+/* WEEK CARD */
+.week-card{
+  background:#fff;
+  border:1px solid #e2e8f0;
+  border-radius:14px;
+  margin-bottom:1rem;
+  overflow:hidden;
+  transition:all .25s ease;
+}
+
+.week-card:hover{
+  box-shadow:0 8px 20px rgba(0,0,0,0.05);
+  transform:translateY(-1px);
+}
+
+.week-card.current{
+  border-color:#1D9E75;
+  box-shadow:0 0 0 1px rgba(29,158,117,0.2);
+}
+
+.week-card.overdue{
+  border-color:#E24B4A;
+}
+
+/* HEADER ROW */
+.week-head{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:1rem 1.2rem;
+  cursor:pointer;
+}
+
+.week-head:hover{
+  background:#f1f5f9;
+}
+
+.wstatus{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+}
+
+.ws-upcoming{background:#cbd5e1}
+.ws-current{background:#1D9E75}
+.ws-done{background:#65a30d}
+.ws-overdue{background:#ef4444}
+
+.week-info{flex:1}
+
+.week-title-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap
+}
+
+.week-name{
+  font-size:14px;
+  font-weight:600
+}
+
+.week-dates{
+  font-size:11px;
+  color:#64748b;
+  margin-top:2px;
+}
+
+/* BADGES */
+.status-badge{
+  font-size:10px;
+  font-weight:500;
+  padding:3px 8px;
+  border-radius:999px;
+}
+
+.sb-upcoming{background:#e2e8f0;color:#475569}
+.sb-current{background:#dcfce7;color:#166534}
+.sb-overdue{background:#fee2e2;color:#991b1b}
+.sb-done{background:#ecfccb;color:#3f6212}
+.sb-missed{background:#fff1f2;color:#9f1239}
+
+.algo-tag{
+  font-size:10px;
+  padding:2px 6px;
+  border-radius:6px;
+  background:#eef2ff;
+  color:#4338ca;
+  font-weight:500
+}
+
+/* RIGHT SIDE */
+.week-right{
+  display:flex;
+  align-items:center;
+  gap:10px
+}
+
+.week-pct{
+  font-size:12px;
+  font-weight:500;
+  color:#475569
+}
+
+.chevron{
+  transition:transform .2s ease;
+}
+
+/* BODY */
+.week-body{
+  padding:0 1.2rem;
+  max-height:0;
+  overflow:hidden;
+  transition:max-height .3s ease, padding .2s;
+}
+
+.week-body.open{
+  max-height:700px;
+  padding:.4rem 1.2rem 1rem;
+}
+
+/* PROGRESS */
+.week-prog{
+  height:4px;
+  background:#e2e8f0;
+  border-radius:999px;
+  margin-bottom:.8rem;
+}
+
+.week-prog-fill{
+  height:100%;
+  border-radius:999px;
+  background:#1D9E75;
+  transition:width .4s;
+}
+
+/* TASKS */
+.task{
+  display:flex;
+  gap:10px;
+  padding:6px 0;
+  border-bottom:1px solid #f1f5f9;
+}
+
+.task:last-child{border-bottom:none}
+
+.task input{
+  margin-top:3px;
+  accent-color:#1D9E75;
+}
+
+.task label{
+  font-size:13px;
+  line-height:1.5;
+}
+
+.task.done label{
+  text-decoration:line-through;
+  color:#94a3b8;
+}
+
+.task.missed-task label{
+  color:#dc2626;
+}
+
+/* DELIVERABLE */
+.deliverable{
+  margin-top:.8rem;
+  padding:.65rem .9rem;
+  border-left:4px solid #1D9E75;
+  background:#f1f5f9;
+  border-radius:6px;
+  font-size:12px;
+  color:#475569;
+}
+
+/* DEADLINE */
+.deadline-note{
+  font-size:11px;
+  margin-top:3px;
+}
+
+.dn-ok{color:#16a34a}
+.dn-warn{color:#d97706}
+.dn-over{color:#dc2626}
+</style>
+
+<div class="hdr">
+  <h1>Vehicle Registration POC <span id="today-badge"></span></h1>
+  <p>Started May 10, 2025 · 8-week real-time tracker</p>
+  <div class="overall-bar-wrap"><div class="overall-bar-fill" id="overall-bar" style="width:0%"></div></div>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="val" id="s-done">0</div><div class="lbl">Tasks done</div></div>
+  <div class="stat"><div class="val" id="s-total">0</div><div class="lbl">Total tasks</div></div>
+  <div class="stat"><div class="val" id="s-pct">0%</div><div class="lbl">Completed</div></div>
+  <div class="stat"><div class="val" id="s-week">—</div><div class="lbl">Current week</div></div>
+</div>
+
+<div id="tracker"></div>
+
+<script>
+const START = new Date('2025-05-10');
+const TODAY = new Date();
+TODAY.setHours(0,0,0,0);
+
+function weekRange(w) {
+  const s = new Date(START);
+  s.setDate(s.getDate() + w * 7);
+  const e = new Date(s);
+  e.setDate(e.getDate() + 6);
+  return [s, e];
+}
+
+function fmtDate(d) {
+  return d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+}
+
+function weekStatus(w) {
+  const [s, e] = weekRange(w);
+  if (TODAY < s) return 'upcoming';
+  if (TODAY >= s && TODAY <= e) return 'current';
+  return 'past';
+}
+
+function daysLeft(w) {
+  const [, e] = weekRange(w);
+  const diff = Math.round((e - TODAY) / 86400000);
+  return diff;
+}
+
+const months = [
+  {
+    label: "Month 1 — Foundation & core setup",
+    weeks: [
+      { title:"Week 1 — Project setup & auth", tasks:["Django project setup (vehicle_reg_poc)","Create apps: users, vehicles, kyc, staff","Role-based auth (end-user vs staff)","Basic Bootstrap / Tailwind templates","Media & static file storage setup"] },
+      { title:"Week 2 — User profile & document upload", tasks:["Profile model with KYC status","Document upload forms (citizenship, license)","User dashboard skeleton","Staff login + base dashboard"] },
+      { title:"Week 3 — KYC workflow", tasks:["KycDocument model","Staff view for uploaded documents","Approve / reject with remarks","KYC status visible to user"] },
+      { title:"Week 4 — Vehicle registration workflow", tasks:["Vehicle + VehicleDocument models","User submits vehicle details + uploads docs","Insurance, tax clearance, photos upload","Staff vehicle approval list"], deliverable:"Full basic flow working — signup → KYC upload → vehicle submission → staff approval." }
+    ]
+  },
+  {
+    label: "Month 2 — Algorithms, polish & deployment",
+    weeks: [
+      { title:"Week 5 — OCR auto-fill (pytesseract)", algo:true, tasks:["Install pytesseract + Pillow","Preprocess image (grayscale, contrast boost)","Run Tesseract on uploaded citizenship card","Parse text with regex (name, DOB, district, citizenship no.)","Auto-fill form fields; user reviews & confirms","Store raw OCR output in DB"] },
+      { title:"Week 6 — Fraud detection (pHash)", algo:true, tasks:["Install imagehash library","Compute pHash on every KYC document upload","Compare new upload vs stored hashes (Hamming distance)","Flag as 'Possible Duplicate/Tampered' if distance < 10","Add phash_value, is_flagged, flag_reason to KycDocument","Staff dashboard shows warning badge on flagged apps","Run OCR + pHash simultaneously on same image"] },
+      { title:"Week 7 — Notifications, testing & PDF slip", tasks:["Email notifications on KYC approve / reject","Email on vehicle registration approval","Django console email backend for POC","User timeline view (track each application step)","PDF slip using reportlab or weasyprint","Slip includes: user info, vehicle details, status, date","Downloadable from user dashboard","Unit tests for pHash + OCR algorithms","Test edge cases (duplicate docs, blurry images, role access)"] },
+      { title:"Week 8 — UI polish & deployment", tasks:["Clean up all templates","Mobile responsive layouts","Staff dashboard stats (pending, approved today, flagged)","Charts with Chart.js","Deploy on Render / PythonAnywhere / DigitalOcean","Configure media file storage","Set environment variables, DEBUG=False","End-to-end manual testing on live server","Write project report (problem, solution, algorithms, diagrams)","ER diagram, flowcharts, DFD","Prepare viva explanation for both algorithms"], deliverable:"Fully deployed, tested system with both algorithms live, PDF slip downloadable, and project report ready." }
+    ]
+  }
+];
+
+const KEY = 'vreg_rt_v3';
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem(KEY)||'{}'); } catch(e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch(e) {} }
+
+const todayBadge = document.getElementById('today-badge');
+todayBadge.innerHTML = `<span class="today-badge" style="font-size:12px;background:var(--color-background-secondary);color:var(--color-text-secondary);border-radius:var(--border-radius-md);padding:2px 8px;font-weight:400;border:0.5px solid var(--color-border-tertiary)">${TODAY.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'})}</span>`;
+
+let globalWeekIdx = 0;
+const tracker = document.getElementById('tracker');
+
+months.forEach((month, mi) => {
+  const ml = document.createElement('div');
+  ml.className = 'month-lbl';
+  ml.textContent = month.label;
+  tracker.appendChild(ml);
+
+  month.weeks.forEach((week, wi) => {
+    const wIdx = globalWeekIdx++;
+    const [wStart, wEnd] = weekRange(wIdx);
+    const status = weekStatus(wIdx);
+    const dl = daysLeft(wIdx);
+
+    const card = document.createElement('div');
+    card.className = 'week-card' + (status==='current'?' current':status==='past'?' ':'');
+
+    let statusLabel = '', statusCls = '';
+    if (status==='upcoming') { statusLabel='Upcoming'; statusCls='sb-upcoming'; }
+    else if (status==='current') { statusLabel='This week'; statusCls='sb-current'; }
+    else { statusLabel='Past'; statusCls='sb-done'; }
+
+    let deadlineNote = '';
+    if (status==='current') {
+      if (dl < 0) deadlineNote = `<div class="deadline-note dn-over">Deadline passed ${Math.abs(dl)} day${Math.abs(dl)!==1?'s':''} ago</div>`;
+      else if (dl === 0) deadlineNote = `<div class="deadline-note dn-warn">Due today!</div>`;
+      else deadlineNote = `<div class="deadline-note dn-ok">${dl} day${dl!==1?'s':''} left this week</div>`;
+    }
+
+    card.innerHTML = `
+      <div class="week-head" id="head-${wIdx}">
+        <div class="wstatus ws-${status==='past'?'done':status}" id="dot-${wIdx}"></div>
+        <div class="week-info">
+          <div class="week-title-row">
+            <span class="week-name">${week.title}</span>
+            ${week.algo?'<span class="algo-tag">Algorithm</span>':''}
+            <span class="status-badge ${statusCls}" id="sbadge-${wIdx}">${statusLabel}</span>
+          </div>
+          <div class="week-dates">${fmtDate(wStart)} – ${fmtDate(wEnd)}${deadlineNote}</div>
+        </div>
+        <div class="week-right">
+          <span class="week-pct" id="wpct-${wIdx}">0%</span>
+          <i class="ti ti-chevron-down chevron" id="chev-${wIdx}" aria-hidden="true"></i>
+        </div>
+      </div>
+      <div class="week-body${status==='current'?' open':''}" id="body-${wIdx}">
+        <div class="week-prog"><div class="week-prog-fill" id="wfill-${wIdx}" style="width:0%"></div></div>
+        <div id="tasks-${wIdx}"></div>
+        ${week.deliverable?`<div class="deliverable"><strong>Deliverable:</strong> ${week.deliverable}</div>`:''}
+      </div>
+    `;
+
+    tracker.appendChild(card);
+
+    const taskContainer = document.getElementById(`tasks-${wIdx}`);
+    week.tasks.forEach((t, ti) => {
+      const id = `t-${wIdx}-${ti}`;
+      const checked = !!saved[id];
+      const isPast = status === 'past';
+      const isMissed = isPast && !checked;
+      const row = document.createElement('div');
+      row.className = 'task' + (checked?' done':'') + (isMissed?' missed-task':'');
+      row.innerHTML = `<input type="checkbox" id="${id}" ${checked?'checked':''}><label for="${id}">${t}</label>`;
+      taskContainer.appendChild(row);
+    });
+
+    function refreshWeek() {
+      let done=0, total=0;
+      taskContainer.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+        total++;
+        if(cb.checked) done++;
+        const row = cb.closest('.task');
+        const isPast = status==='past';
+        row.classList.toggle('done', cb.checked);
+        row.classList.toggle('missed-task', isPast && !cb.checked);
+      });
+      const pct = total?Math.round(done/total*100):0;
+      document.getElementById(`wpct-${wIdx}`).textContent = pct+'%';
+      document.getElementById(`wfill-${wIdx}`).style.width = pct+'%';
+
+      if (status==='past') {
+        const allDone = done===total;
+        const dot = document.getElementById(`dot-${wIdx}`);
+        const sb = document.getElementById(`sbadge-${wIdx}`);
+        dot.className = 'wstatus ' + (allDone?'ws-done':'ws-overdue');
+        sb.className = 'status-badge ' + (allDone?'sb-done':'sb-missed');
+        sb.textContent = allDone?'Completed':'Incomplete';
+        card.className = 'week-card' + (allDone?'':' overdue');
+      }
+      updateGlobal();
+      save();
+    }
+
+    taskContainer.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+      cb.addEventListener('change', ()=>{ saved[cb.id]=cb.checked; refreshWeek(); });
+    });
+
+    const head = document.getElementById(`head-${wIdx}`);
+    const body = document.getElementById(`body-${wIdx}`);
+    const chev = document.getElementById(`chev-${wIdx}`);
+    head.addEventListener('click', ()=>{
+      const open = body.classList.toggle('open');
+      chev.style.transform = open?'rotate(180deg)':'';
+    });
+
+    refreshWeek();
+  });
+});
+
+function updateGlobal() {
+  let done=0, total=0, curWeek='—';
+  document.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+    total++; if(cb.checked) done++;
+  });
+  const pct = total?Math.round(done/total*100):0;
+  document.getElementById('s-done').textContent = done;
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-pct').textContent = pct+'%';
+  document.getElementById('overall-bar').style.width = pct+'%';
+
+  for(let i=0;i<8;i++){
+    const s = weekStatus(i);
+    if(s==='current'){curWeek='W'+(i+1); break;}
+    if(s==='upcoming'&&i===0){curWeek='W1 soon'; break;}
+  }
+  document.getElementById('s-week').textContent = curWeek;
+}
+
+updateGlobal();
+</script>
